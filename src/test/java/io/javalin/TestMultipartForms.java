@@ -86,6 +86,31 @@ public class TestMultipartForms {
     }
 
     @Test
+    public void test_files_and_fields() throws Exception {
+        Javalin app = Javalin.start(0);
+        app.post("/test-upload", ctx -> ctx.result(ctx.formParam("field") + " and " + ctx.uploadedFile("upload").getName()));
+        HttpResponse<String> response = Unirest.post("http://localhost:" + app.port() + "/test-upload")
+            .field("upload", new File("src/test/resources/upload-test/image.png"))
+            .field("field", "text-value")
+            .asString();
+        assertThat(response.getBody(), is("text-value and image.png"));
+        app.stop();
+    }
+
+    @Test
+    public void test_files_and_multiple_fields() throws Exception {
+        Javalin app = Javalin.start(0);
+        app.post("/test-upload", ctx -> ctx.result(ctx.formParam("field") + " and " + ctx.formParam("field2")));
+        HttpResponse<String> response = Unirest.post("http://localhost:" + app.port() + "/test-upload")
+            .field("upload", new File("src/test/resources/upload-test/image.png"))
+            .field("field", "text-value")
+            .field("field2", "text-value-2")
+            .asString();
+        assertThat(response.getBody(), is("text-value and text-value-2"));
+        app.stop();
+    }
+
+    @Test
     public void test_doesntCrash_whenNotMultipart() throws Exception {
         Javalin app = Javalin.start(0);
         app.post("/test-upload", ctx -> {
